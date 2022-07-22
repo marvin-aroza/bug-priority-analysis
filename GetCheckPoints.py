@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import sklearn
+import seaborn as sns
 
 def read_csv_data(data_path):
     
@@ -16,7 +17,8 @@ def read_csv_data(data_path):
                 clip_rows.append(i)
                 break
     data_array = np.delete(data_array, clip_rows, 0)
-    x = (data_array[:,:-1])    
+    x = (data_array[:,:-1]) 
+    y = pd.get_dummies(data_array[:,-1]).values   
     return x, y
 
 def get_category_grouping(array, prediction_headers):
@@ -113,8 +115,19 @@ def plot_roc(y_test, y_predicted, feature_labels, epochs, perceptrons, accuracy,
     while os.path.exists('{}-({:d}).png'.format(image_name, i)):
         i += 1
     plt.savefig('{}-({:d}).png'.format(image_name, i))
+    # generate_confusion_matrix(y_test, y_predicted)
     #plt.show()
 
+def generate_confusion_matrix(y_true, y_pred):
+    cdata = sklearn.metrics.confusion_matrix(y_true.argmax(axis=1), y_pred.argmax(axis=1))
+    cmva =pd.DataFrame([cdata], columns=['Blocker', 'Critical', 'Major', 'Minor', 'Trivial'], index= ['Blocker', 'Critical', 'Major', 'Minor', 'Trivial'])
+    cmva.index.name, cmva.columns.name = "Tested" , "Trained"
+    plt.figure(figsize = (15,20))
+    plt.title('confusion matrix')
+    sns.set(font_scale=2.5)
+    ax = sns.heatmap(cmva, cbar=False, cmap="Blues", annot=True, annot_kws={"size":16}, fmt='g')
+    plt.show()
+    
 def apply_activation_function(X, W, b, func='softmax'):
     
     if (func == 'softmax'):
@@ -215,6 +228,7 @@ def run_model(n_hidden_layers, X, y, n, learning_rate, epochs, k,
 
 
 module_name = 'Bug Data'
+
 formatted_data = "file:///V:/PROJECTS/FREELANCE/COVENTRY/Neuralnetwork/github/bug-priority-analysis/clean_data.csv"
 
 x, y = read_csv_data(formatted_data)
@@ -250,7 +264,7 @@ print(dist)
 
 n_hidden_layers = 1
 learning_rate = 0.01
-epochs = 10000
+epochs = 15
 
 init_perceptrons = 2
 total_perceptrons = 350
@@ -286,7 +300,7 @@ if (init_perceptrons < total_perceptrons):
     max_acc = total_acc[max_acc_index]
     
     image_subtitle = ("Average Accuracy: {:.5f}%".format(avg_acc*100) + "\nMaximum Accuracy: {:.5f}%".format(max_acc*100)
-                   + " with " + str(perceptron_count[max_acc_index]) + " perceptrons")
+                + " with " + str(perceptron_count[max_acc_index]) + " perceptrons")
     title= 'Change of prediction accuracy\nas the number of perceptrons increases'
     image_name = 'V:/PROJECTS/FREELANCE/COVENTRY/Neuralnetwork/github/bug-priority-analysis/results/accuracy-perceptrons-' + str(init_perceptrons) + '-to-' + str(total_perceptrons)
 
